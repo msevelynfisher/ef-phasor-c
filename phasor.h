@@ -59,7 +59,7 @@ void phasor_clock(Phasor* phasor);
 //------------------------------------------------------------------------------
 // Over many cycles, the amplitude of a phasor may drift. Calling this function
 // makes a small correction to the amplitude without evaluating a square root by
-// performing a single Newton-Rhapson iteration of the function
+// performing a single Newton-Raphson iteration of the function
 //     f(c) = 1 - (c*r)^2
 //------------------------------------------------------------------------------
 void phasor_correct(Phasor* phasor);
@@ -99,7 +99,7 @@ void phasor_clock(Phasor* phasor) {
 
 void phasor_correct(Phasor* phasor) {
     // Using the function f(c) = 1-(c*r)^2, perform a single iteration of
-    // Newton-Rhapson root finding to make a small correction to the
+    // Newton-Raphson root finding to make a small correction to the
     // amplitude of the phasor. This correction is not exact but is very
     // computational efficient as it avoids computing a square root.
     ph_t r2 = phasor->x * phasor->x + phasor->y * phasor->y;
