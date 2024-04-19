@@ -1,5 +1,5 @@
 build:
-	gcc -o synthesizer -I ../.. main.c -lm
+	gcc -o synthesizer -O3 -I ../.. main.c -lm
 
 run:
 	./synthesizer

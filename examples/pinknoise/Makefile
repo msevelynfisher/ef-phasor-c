@@ -1,5 +1,5 @@
 build:
-	gcc -o pinknoise -I ../.. main.c -lm
+	gcc -o pinknoise -O3 -I ../.. main.c -lm
 
 run:
 	./pinknoise
