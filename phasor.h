@@ -25,6 +25,7 @@
 #ifndef PHASOR_H_INCLUDED
 #define PHASOR_H_INCLUDED
 
+#include <stdlib.h>
 #include <math.h>
 
 #ifdef PHASOR_USE_SINGLE_PRECISION
@@ -36,6 +37,12 @@
 typedef struct {
     ph_t x, y, c, s;
 } Phasor;
+
+typedef struct {
+    int len;
+    ph_t* ampls;
+    Phasor* phasors;
+} Spectrum;
 
 //------------------------------------------------------------------------------
 // Initializes a phasor with frequency f, timestep dt, and initial phase, th, in
@@ -65,14 +72,61 @@ void phasor_clock(Phasor* phasor);
 void phasor_correct(Phasor* phasor);
 
 //------------------------------------------------------------------------------
-// Loops over an array of phasors, calling phasor_clock on each.
+// DEPRECATED - Loops over an array of phasors, calling phasor_clock on each.
 //------------------------------------------------------------------------------
 void phasors_clock(Phasor* phasors, int n);
 
 //------------------------------------------------------------------------------
-// Loops over an array of phasors, calling phasor_correct on each.
+// DEPRECATED - Loops over an array of phasors, calling phasor_correct on each.
 //------------------------------------------------------------------------------
 void phasors_correct(Phasor* phasors, int n);
+
+//------------------------------------------------------------------------------
+// Allocate a new Spectrum of phasors.
+//------------------------------------------------------------------------------
+Spectrum* spectrum_new(int n);
+
+//------------------------------------------------------------------------------
+// Free the memory associated with a Spectrum.
+//------------------------------------------------------------------------------
+void spectrum_free(Spectrum* s);
+
+//------------------------------------------------------------------------------
+// Get a pointer to the amplitude of the ith Phasor in a Spectrum.
+//------------------------------------------------------------------------------
+ph_t* spectrum_ampl(Spectrum* s, int i);
+
+//------------------------------------------------------------------------------
+// Get a pointer to the ith Phasor in a Spectrum.
+//------------------------------------------------------------------------------
+Phasor* spectrum_phasor(Spectrum* s, int i);
+
+//------------------------------------------------------------------------------
+// Clock each Phasor in a Spectrum, advancing the timestep.
+//------------------------------------------------------------------------------
+void spectrum_clock(Spectrum* s);
+
+//------------------------------------------------------------------------------
+// Apply a correction term to each Phasor in Spectrum to avoid amplitude drift.
+//------------------------------------------------------------------------------
+void spectrum_correct(Spectrum* s);
+
+//------------------------------------------------------------------------------
+// Compute the sum of the Phasor x-values (scaled by their amplitudes).
+//------------------------------------------------------------------------------
+ph_t spectrum_sum_x(Spectrum* s);
+
+//------------------------------------------------------------------------------
+// Compute the sum of the Phasor y-values (scaled by their amplitudes).
+//------------------------------------------------------------------------------
+ph_t spectrum_sum_y(Spectrum* s);
+
+//==============================================================================
+// Implementation
+//==============================================================================
+// This section needs to be incorporated into exactly one translation unit by
+// defining the following macro.
+//==============================================================================
 
 #ifdef PHASOR_IMPLEMENTATION
 
@@ -108,16 +162,84 @@ void phasor_correct(Phasor* phasor) {
     phasor->y *= c;
 }
 
+// DEPRECATED
 void phasors_clock(Phasor* phasors, int n) {
     for (int i = 0; i < n; ++i) {
         phasor_clock(&phasors[i]);
     }
 }
 
+// DEPRECATED
 void phasors_correct(Phasor* phasors, int n) {
     for (int i = 0; i < n; ++i) {
         phasor_correct(&phasors[i]);
     }
+}
+
+Spectrum* spectrum_new(int n) {
+    void* mem = malloc(sizeof(Spectrum) + n * (sizeof(ph_t) + sizeof(Phasor)));
+    if (mem == NULL) {
+        return NULL;
+    }
+
+    Spectrum* s = mem;
+    s->len = n;
+    s->ampls = mem + sizeof(Spectrum);
+    s->phasors = mem + sizeof(Spectrum) + n * sizeof(ph_t);
+
+    return s;
+}
+
+void spectrum_free(Spectrum* s) {
+    free(s);
+}
+
+ph_t* spectrum_ampl(Spectrum* s, int i) {
+    if (i >= s->len) {
+        return NULL;
+    }
+    
+    return &s->ampls[i];
+}
+
+Phasor* spectrum_phasor(Spectrum* s, int i) {
+    if (i >= s->len) {
+        return NULL;
+    }
+
+    return &s->phasors[i];
+}
+
+void spectrum_clock(Spectrum* s) {
+    for (int i = 0; i < s->len; i++) {
+        phasor_clock(&s->phasors[i]);
+    }
+}
+
+void spectrum_correct(Spectrum* s) {
+    for (int i = 0; i < s->len; i++) {
+        phasor_correct(&s->phasors[i]);
+    }
+}
+
+ph_t spectrum_sum_x(Spectrum* s) {
+    ph_t sum = 0.0;
+
+    for (int i = 0; i < s->len; i++) {
+        sum += s->ampls[i] * s->phasors[i].x;
+    }
+
+    return sum;
+}
+
+ph_t spectrum_sum_y(Spectrum* s) {
+    ph_t sum = 0.0;
+
+    for (int i = 0; i < s->len; i++) {
+        sum += s->ampls[i] * s->phasors[i].y;
+    }
+
+    return sum;
 }
 
 #endif // PHASOR_IMPLEMENTATION
