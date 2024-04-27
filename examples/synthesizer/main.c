@@ -31,10 +31,12 @@ int main() {
         double v = 0.1 * (sines[0].y + sines[1].y + sines[2].y);
         fwrite(&v, sizeof(double), 1, out);
 
-        phasors_clock(sines, 3);                 // Advance a timestep
+        for (int j = 0; j < 3; j++) {
+            phasor_clock(&sines[j]);             // Advance a timestep
 
-        if (i % 1000 == 0) {
-            phasors_correct(sines, 3);           // Apply amplitude correction
+            if (i % 1000 == 0) {
+                phasor_correct(&sines[j]);           // Apply amplitude correction
+            }
         }
     }
 
