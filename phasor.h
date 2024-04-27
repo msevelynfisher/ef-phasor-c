@@ -72,16 +72,6 @@ void phasor_clock(Phasor* phasor);
 void phasor_correct(Phasor* phasor);
 
 //------------------------------------------------------------------------------
-// DEPRECATED - Loops over an array of phasors, calling phasor_clock on each.
-//------------------------------------------------------------------------------
-void phasors_clock(Phasor* phasors, int n);
-
-//------------------------------------------------------------------------------
-// DEPRECATED - Loops over an array of phasors, calling phasor_correct on each.
-//------------------------------------------------------------------------------
-void phasors_correct(Phasor* phasors, int n);
-
-//------------------------------------------------------------------------------
 // Allocate a new Spectrum of phasors.
 //------------------------------------------------------------------------------
 Spectrum* spectrum_new(int n);
@@ -160,20 +150,6 @@ void phasor_correct(Phasor* phasor) {
     ph_t c = (1 + r2) / (2 * r2);
     phasor->x *= c;
     phasor->y *= c;
-}
-
-// DEPRECATED
-void phasors_clock(Phasor* phasors, int n) {
-    for (int i = 0; i < n; ++i) {
-        phasor_clock(&phasors[i]);
-    }
-}
-
-// DEPRECATED
-void phasors_correct(Phasor* phasors, int n) {
-    for (int i = 0; i < n; ++i) {
-        phasor_correct(&phasors[i]);
-    }
 }
 
 Spectrum* spectrum_new(int n) {
