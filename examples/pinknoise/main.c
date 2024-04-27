@@ -24,12 +24,13 @@ double randrange(double min, double max) {
 
 int main() {
     // Create a spectrum of phasors with energy proportional to 1/f
-    double ampls[N];
-    Phasor sines[N];
+    Spectrum* spec = spectrum_new(N);
     for (int i = 0; i < N; i++) {
         double f = 40.0 + 5.0 * (i + randrange(0.0, 1.0));
-        ampls[i] = 0.1 * sqrt(1 / f);
-        phasor_init(&sines[i], f, DT, randrange(0.0, 2.0 * M_PI));
+        double phase = randrange(0.0, 2.0 * M_PI);
+        double ampl = 0.1 * sqrt(1 / f);
+        phasor_init(spectrum_phasor(spec, i), f, DT, phase);
+        *spectrum_ampl(spec, i) = ampl;
     }
 
     // Open the output file. The audio is encoded as 44.1 kHz mono LE float64.
@@ -40,18 +41,16 @@ int main() {
     }
 
     for (int i = 0; i < 4 * FREQ; i++) {         // Iterate for four seconds
-        double v = 0.0;                          // Sum the scaled phasors
-        for (int j = 0; j < N; j++) {
-            v += ampls[j] * sines[j].y;
-        }
+        double v = spectrum_sum_x(spec);         // Sum the scaled phasors
         fwrite(&v, sizeof(double), 1, out);      // Output the sum
 
-        phasors_clock(sines, N);                 // Advance a timestep
+        spectrum_clock(spec);                    // Advance a timestep
 
         if (i % 1000 == 0) {
-            phasors_correct(sines, N);           // Apply amplitude correction
+            spectrum_correct(spec);              // Apply amplitude correction
         }
     }
 
+    spectrum_free(spec);                         // Deallocate spectrum
     fclose(out);                                 // Close the output file
 }
