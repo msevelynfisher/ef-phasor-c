@@ -77,6 +77,16 @@ void phasor_correct(Phasor* phasor);
 Spectrum* spectrum_new(int n);
 
 //------------------------------------------------------------------------------
+// Allocate a new Spectrum of phasors and initialize it using the given
+// frequency range and energy density function.
+//------------------------------------------------------------------------------
+
+typedef ph_t (*func_pdf)(ph_t);
+Spectrum* spectrum_generate(
+    ph_t dt, ph_t f_min, ph_t f_max, int n, func_pdf edf
+);
+
+//------------------------------------------------------------------------------
 // Free the memory associated with a Spectrum.
 //------------------------------------------------------------------------------
 void spectrum_free(Spectrum* s);
@@ -166,6 +176,30 @@ Spectrum* spectrum_new(int n) {
     return s;
 }
 
+Spectrum* spectrum_generate(ph_t dt, ph_t f_min, ph_t f_max, int n, func_pdf edf) {
+    Spectrum* s = spectrum_new(n);
+
+    ph_t ln_f_min = log(f_min);
+    ph_t ln_f_max = log(f_max);
+    ph_t ln_f_rat = (ln_f_max - ln_f_min) / n;
+    ph_t f_rat = exp(ln_f_rat);
+    ph_t f_rat_h = sqrt(f_rat);
+
+    ph_t f = f_min;
+    for (int i = 0; i < n; i += 1) {
+        ph_t phase = 2.0 * M_PI * ((double) rand() / (double)RAND_MAX);
+        ph_t f_width = f * f_rat_h - f / f_rat_h;
+        ph_t ampl = sqrt(f_width * edf(f));
+
+        *spectrum_ampl(s, i) = ampl;
+        phasor_init(spectrum_phasor(s, i), f, dt, phase);
+
+        f *= f_rat;
+    }
+
+    return s;
+}
+
 void spectrum_free(Spectrum* s) {
     free(s);
 }
@@ -174,7 +208,7 @@ ph_t* spectrum_ampl(Spectrum* s, int i) {
     if (i >= s->len) {
         return NULL;
     }
-    
+
     return &s->ampls[i];
 }
 
